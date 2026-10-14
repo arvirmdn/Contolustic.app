@@ -4,6 +4,7 @@ import '../models/song.dart';
 import '../services/download_service.dart';
 import '../services/youtube_service.dart';
 import '../utils/format.dart';
+import '../widgets/add_to_playlist.dart';
 import '../widgets/thumb.dart';
 import 'player_screen.dart';
 
@@ -116,17 +117,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        trailing: busy
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : IconButton(
-                                icon: const Icon(Icons.download_outlined),
-                                onPressed: () => _download(song),
-                              ),
-                        onTap: () => playAndOpen(context, song),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.playlist_add),
+                              onPressed: () => showAddToPlaylist(context, song),
+                            ),
+                            busy
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : IconButton(
+                                    icon: const Icon(Icons.download_outlined),
+                                    onPressed: () => _download(song),
+                                  ),
+                          ],
+                        ),
+                        onTap: () => playAndOpen(context, song, queue: _results),
                       );
                     },
                   ),

@@ -6,21 +6,34 @@ import '../services/download_service.dart';
 import '../services/lyrics_service.dart';
 import '../services/player_service.dart';
 import '../utils/format.dart';
+import '../widgets/add_to_playlist.dart';
 import '../widgets/thumb.dart';
 
 const double _lineHeight = 56;
 
-/// Memutar lagu lalu membuka layar pemutar.
-Future<void> playAndOpen(BuildContext context, Song song) async {
+/// Memutar lagu (atau antrean) lalu membuka layar pemutar.
+Future<void> playAndOpen(
+  BuildContext context,
+  Song song, {
+  List<Song>? queue,
+  bool shuffle = false,
+}) async {
   final messenger = ScaffoldMessenger.of(context);
   final navigator = Navigator.of(context);
+  final list = queue ?? [song];
+  final start = list.indexWhere((s) => s.id == song.id);
   try {
-    await PlayerService.instance.play(song);
+    await PlayerService.instance.playQueue(
+      list,
+      startIndex: start < 0 ? 0 : start,
+      shuffleOn: shuffle,
+    );
   } catch (e) {
     messenger.showSnackBar(SnackBar(content: Text('Gagal memutar: $e')));
     return;
   }
-  navigator.push(MaterialPageRoute(builder: (_) => PlayerScreen(song: song)));
+  final now = PlayerService.instance.current.value ?? song;
+  navigator.push(MaterialPageRoute(builder: (_) => PlayerScreen(song: now)));
 }
 
 class PlayerScreen extends StatefulWidget {
@@ -33,8 +46,9 @@ class PlayerScreen extends StatefulWidget {
 
 class _PlayerScreenState extends State<PlayerScreen> {
   final _scroll = ScrollController();
-  late final Future<Lyrics?> _lyrics;
 
+  late Song _song;
+  late Future<Lyrics?> _lyrics;
   double? _dragMs;
   int _lastIndex = -1;
   bool _downloaded = false;
@@ -45,24 +59,40 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
-    _downloaded = widget.song.isDownloaded;
-    _lyrics = LyricsService.fetch(
-      title: widget.song.title,
-      artist: widget.song.artist,
-    );
+    _song = PlayerService.instance.current.value ?? widget.song;
+    _loadSong();
+    PlayerService.instance.current.addListener(_onSongChanged);
   }
 
   @override
   void dispose() {
+    PlayerService.instance.current.removeListener(_onSongChanged);
     _scroll.dispose();
     super.dispose();
+  }
+
+  /// Dipanggil saat lagu berganti (berikutnya, sebelumnya, atau otomatis).
+  void _onSongChanged() {
+    final now = PlayerService.instance.current.value;
+    if (!mounted || now == null || now.id == _song.id) return;
+    setState(() {
+      _song = now;
+      _loadSong();
+    });
+  }
+
+  void _loadSong() {
+    _downloaded = _song.isDownloaded;
+    _lastIndex = -1;
+    _dragMs = null;
+    _lyrics = LyricsService.fetch(title: _song.title, artist: _song.artist);
   }
 
   Future<void> _downloadCurrent() async {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _busy = true);
     try {
-      await DownloadService.instance.download(widget.song);
+      await DownloadService.instance.download(_song);
       if (mounted) setState(() => _downloaded = true);
       messenger.showSnackBar(
         const SnackBar(content: Text('Tersimpan untuk diputar offline')),
@@ -101,11 +131,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final song = widget.song;
+    final song = _song;
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sedang diputar')),
+      appBar: AppBar(
+        title: const Text('Sedang diputar'),
+        actions: [
+          IconButton(
+            icon: Icon(_downloaded ? Icons.download_done : Icons.download_outlined),
+            onPressed: (_downloaded || _busy) ? null : _downloadCurrent,
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -186,21 +224,25 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   Widget _controls() {
+    final service = PlayerService.instance;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        IconButton(
-          iconSize: 28,
-          icon: Icon(_downloaded ? Icons.download_done : Icons.download_outlined),
-          onPressed: (_downloaded || _busy) ? null : _downloadCurrent,
+        ValueListenableBuilder<bool>(
+          valueListenable: service.shuffle,
+          builder: (context, on, _) => IconButton(
+            iconSize: 26,
+            tooltip: 'Acak',
+            color: on ? Theme.of(context).colorScheme.primary : null,
+            icon: const Icon(Icons.shuffle),
+            onPressed: service.toggleShuffle,
+          ),
         ),
         IconButton(
-          iconSize: 32,
-          icon: const Icon(Icons.replay_10),
-          onPressed: () {
-            final p = _player.position - const Duration(seconds: 10);
-            _player.seek(p.isNegative ? Duration.zero : p);
-          },
+          iconSize: 36,
+          tooltip: 'Sebelumnya',
+          icon: const Icon(Icons.skip_previous),
+          onPressed: service.previous,
         ),
         StreamBuilder<bool>(
           stream: _player.playingStream,
@@ -214,11 +256,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
           },
         ),
         IconButton(
-          iconSize: 32,
-          icon: const Icon(Icons.forward_10),
-          onPressed: () => _player.seek(_player.position + const Duration(seconds: 10)),
+          iconSize: 36,
+          tooltip: 'Berikutnya',
+          icon: const Icon(Icons.skip_next),
+          onPressed: service.next,
         ),
-        const SizedBox(width: 28),
+        IconButton(
+          iconSize: 26,
+          tooltip: 'Tambah ke playlist',
+          icon: const Icon(Icons.playlist_add),
+          onPressed: () => showAddToPlaylist(context, _song),
+        ),
       ],
     );
   }

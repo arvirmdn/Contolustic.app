@@ -55,7 +55,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () => DownloadService.instance.delete(song),
                   ),
-                  onTap: () => playAndOpen(context, song),
+                  onTap: () => playAndOpen(context, song, queue: _songs),
                 );
               },
             ),
