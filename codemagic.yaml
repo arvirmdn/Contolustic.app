@@ -1,0 +1,26 @@
+workflows:
+  android-apk:
+    name: Build APK (Android)
+    instance_type: linux_x2
+    max_build_duration: 30
+    environment:
+      flutter: stable
+      java: 17
+    scripts:
+      - name: Generate folder android
+        script: |
+          flutter create --platforms=android --org com.arvirmdn --project-name metrolist_app .
+      - name: Patch AndroidManifest (izin & service background)
+        script: |
+          python3 scripts/patch_android.py
+      - name: Install dependencies
+        script: |
+          flutter pub get
+      - name: Build APK release
+        script: |
+          flutter build apk --release
+      - name: Rename APK
+        script: |
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/contolustic.apk
+    artifacts:
+      - build/app/outputs/flutter-apk/contolustic.apk
