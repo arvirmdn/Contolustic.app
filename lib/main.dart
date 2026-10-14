@@ -3,19 +3,22 @@ import 'package:just_audio_background/just_audio_background.dart';
 
 import 'screens/downloads_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/playlists_screen.dart';
+import 'services/player_service.dart';
 import 'widgets/mini_player.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Jika inisialisasi notifikasi background gagal atau lama, aplikasi tetap
-  // dibuka. Hanya fitur notifikasi saat layar mati yang tidak aktif.
+  // dibuka dan lagu tetap bisa diputar tanpa notifikasi.
   try {
     await JustAudioBackground.init(
       androidNotificationChannelId: 'com.arvirmdn.metrolist.audio',
       androidNotificationChannelName: 'Pemutar musik',
       androidNotificationOngoing: true,
-    ).timeout(const Duration(seconds: 5));
+    ).timeout(const Duration(seconds: 10));
+    PlayerService.backgroundReady = true;
   } catch (e) {
     debugPrint('JustAudioBackground gagal diinisialisasi: $e');
   }
@@ -51,7 +54,11 @@ class RootScaffold extends StatefulWidget {
 class _RootScaffoldState extends State<RootScaffold> {
   int _index = 0;
 
-  static const _pages = <Widget>[HomeScreen(), DownloadsScreen()];
+  static const _pages = <Widget>[
+    HomeScreen(),
+    PlaylistsScreen(),
+    DownloadsScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +73,10 @@ class _RootScaffoldState extends State<RootScaffold> {
             onDestinationSelected: (i) => setState(() => _index = i),
             destinations: const [
               NavigationDestination(icon: Icon(Icons.search), label: 'Cari'),
+              NavigationDestination(
+                icon: Icon(Icons.queue_music),
+                label: 'Playlist',
+              ),
               NavigationDestination(
                 icon: Icon(Icons.download_done_outlined),
                 label: 'Unduhan',
