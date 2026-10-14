@@ -44,7 +44,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
               itemBuilder: (context, i) {
                 final song = _songs[i];
                 return ListTile(
-                  leading: Thumb(url: song.thumbnailUrl),
+                  leading: SongThumb(url: song.thumbnailUrl),
                   title: Text(
                     song.title,
                     maxLines: 2,

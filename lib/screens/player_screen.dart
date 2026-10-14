@@ -112,7 +112,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           child: Column(
             children: [
               const SizedBox(height: 8),
-              Thumb(url: song.thumbnailUrl, size: 200, radius: 16),
+              SongThumb(url: song.thumbnailUrl, size: 200, radius: 16),
               const SizedBox(height: 16),
               Text(
                 song.title,

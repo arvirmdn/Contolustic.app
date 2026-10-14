@@ -103,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       final song = _results[i];
                       final busy = _downloading.contains(song.id);
                       return ListTile(
-                        leading: Thumb(url: song.thumbnailUrl),
+                        leading: SongThumb(url: song.thumbnailUrl),
                         title: Text(
                           song.title,
                           maxLines: 2,
