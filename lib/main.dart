@@ -7,11 +7,19 @@ import 'widgets/mini_player.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await JustAudioBackground.init(
-    androidNotificationChannelId: 'com.arvirmdn.metrolist.audio',
-    androidNotificationChannelName: 'Pemutar musik',
-    androidNotificationOngoing: true,
-  );
+
+  // Jika inisialisasi notifikasi background gagal atau lama, aplikasi tetap
+  // dibuka. Hanya fitur notifikasi saat layar mati yang tidak aktif.
+  try {
+    await JustAudioBackground.init(
+      androidNotificationChannelId: 'com.arvirmdn.metrolist.audio',
+      androidNotificationChannelName: 'Pemutar musik',
+      androidNotificationOngoing: true,
+    ).timeout(const Duration(seconds: 5));
+  } catch (e) {
+    debugPrint('JustAudioBackground gagal diinisialisasi: $e');
+  }
+
   runApp(const MetrolistApp());
 }
 
