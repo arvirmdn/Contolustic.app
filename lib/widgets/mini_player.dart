@@ -27,7 +27,7 @@ class MiniPlayer extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
               child: Row(
                 children: [
-                  Thumb(url: song.thumbnailUrl, size: 44),
+                  SongThumb(url: song.thumbnailUrl, size: 44),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(

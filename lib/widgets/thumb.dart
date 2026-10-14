@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class Thumb extends StatelessWidget {
+class SongThumb extends StatelessWidget {
   final String url;
   final double size;
   final double radius;
 
-  const Thumb({
+  const SongThumb({
     super.key,
     required this.url,
     this.size = 56,
