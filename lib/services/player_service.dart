@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 
 import '../models/song.dart';
 import 'history_service.dart';
@@ -18,10 +17,6 @@ class PlayerService {
     });
   }
   static final PlayerService instance = PlayerService._();
-
-  /// Diisi true di main() jika notifikasi background berhasil diinisialisasi.
-  /// Jika false, lagu tetap diputar tanpa notifikasi.
-  static bool backgroundReady = false;
 
   final AudioPlayer player = AudioPlayer();
 
@@ -96,22 +91,12 @@ class PlayerService {
   Future<void> _playCurrent() async {
     final song = _order[_cursor];
 
-    final MediaItem? tag = backgroundReady
-        ? MediaItem(
-            id: song.id,
-            title: song.title,
-            artist: song.artist,
-            artUri: song.thumbnailUrl.isEmpty ? null : Uri.parse(song.thumbnailUrl),
-            duration: song.duration,
-          )
-        : null;
-
     final AudioSource source;
     if (song.localPath != null) {
-      source = AudioSource.file(song.localPath!, tag: tag);
+      source = AudioSource.file(song.localPath!);
     } else {
       final info = await YoutubeService.instance.getBestAudio(song.id);
-      source = AudioSource.uri(info.url, tag: tag);
+      source = AudioSource.uri(info.url);
     }
 
     await player.setAudioSource(source);
