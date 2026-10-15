@@ -1,28 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 
 import 'screens/beranda_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/pustaka_screen.dart';
-import 'services/player_service.dart';
 import 'widgets/mini_player.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Jika inisialisasi notifikasi background gagal atau lama, aplikasi tetap
-  // dibuka dan lagu tetap bisa diputar tanpa notifikasi.
-  try {
-    await JustAudioBackground.init(
-      androidNotificationChannelId: 'com.arvirmdn.metrolist.audio',
-      androidNotificationChannelName: 'Pemutar musik',
-      androidNotificationOngoing: true,
-    ).timeout(const Duration(seconds: 10));
-    PlayerService.backgroundReady = true;
-  } catch (e) {
-    debugPrint('JustAudioBackground gagal diinisialisasi: $e');
-  }
-
   runApp(const MetrolistApp());
 }
 
