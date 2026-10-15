@@ -25,8 +25,18 @@ class YoutubeService {
 
   /// Stream audio dengan bitrate tertinggi untuk sebuah video.
   Future<AudioOnlyStreamInfo> getBestAudio(String videoId) async {
+    final candidates = await getAudioCandidates(videoId);
+    return candidates.first;
+  }
+
+  /// Beberapa kandidat stream audio, diurutkan dari bitrate tertinggi.
+  /// Dipakai sebagai cadangan kalau URL pertama ditolak pemutar.
+  Future<List<AudioOnlyStreamInfo>> getAudioCandidates(String videoId) async {
     final manifest = await _yt.videos.streamsClient.getManifest(videoId);
-    return manifest.audioOnly.withHighestBitrate();
+    final best = manifest.audioOnly.withHighestBitrate();
+    final others = manifest.audioOnly.where((s) => s.url != best.url).toList()
+      ..sort((a, b) => b.bitrate.compareTo(a.bitrate));
+    return [best, ...others.take(3)];
   }
 
   /// Bytes audio, dipakai saat mengunduh.

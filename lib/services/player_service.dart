@@ -91,18 +91,38 @@ class PlayerService {
   Future<void> _playCurrent() async {
     final song = _order[_cursor];
 
-    final AudioSource source;
     if (song.localPath != null) {
-      source = AudioSource.file(song.localPath!);
+      await player.setAudioSource(AudioSource.file(song.localPath!));
     } else {
-      final info = await YoutubeService.instance.getBestAudio(song.id);
-      source = AudioSource.uri(info.url);
+      await _setStreamSource(song.id);
     }
 
-    await player.setAudioSource(source);
     current.value = song;
     HistoryService.instance.add(song).catchError((Object _) {});
     // Jangan di-await: Future dari play() baru selesai saat lagu berhenti.
     player.play();
   }
+
+  /// Mencoba beberapa kandidat stream YouTube sampai ada yang bisa diputar.
+  Future<void> _setStreamSource(String videoId) async {
+    final candidates = await YoutubeService.instance.getAudioCandidates(videoId);
+    Object? lastError;
+    for (final info in candidates) {
+      try {
+        await player.setAudioSource(
+          AudioSource.uri(info.url, headers: _streamHeaders),
+        );
+        return;
+      } catch (e) {
+        debugPrint('Stream gagal, coba kandidat berikutnya: $e');
+        lastError = e;
+      }
+    }
+    throw lastError ?? Exception('Tidak ada stream audio yang bisa diputar');
+  }
+
+  static const _streamHeaders = {
+    'User-Agent':
+        'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36',
+  };
 }
