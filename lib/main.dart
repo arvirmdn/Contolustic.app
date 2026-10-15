@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
-import 'screens/downloads_screen.dart';
+import 'screens/beranda_screen.dart';
 import 'screens/home_screen.dart';
-import 'screens/playlists_screen.dart';
+import 'screens/pustaka_screen.dart';
 import 'services/player_service.dart';
 import 'widgets/mini_player.dart';
 
@@ -32,7 +32,7 @@ class MetrolistApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Metrolist',
+      title: 'contolustic',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -55,9 +55,9 @@ class _RootScaffoldState extends State<RootScaffold> {
   int _index = 0;
 
   static const _pages = <Widget>[
+    BerandaScreen(),
     HomeScreen(),
-    PlaylistsScreen(),
-    DownloadsScreen(),
+    PustakaScreen(),
   ];
 
   @override
@@ -72,14 +72,19 @@ class _RootScaffoldState extends State<RootScaffold> {
             selectedIndex: _index,
             onDestinationSelected: (i) => setState(() => _index = i),
             destinations: const [
-              NavigationDestination(icon: Icon(Icons.search), label: 'Cari'),
               NavigationDestination(
-                icon: Icon(Icons.queue_music),
-                label: 'Playlist',
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home),
+                label: 'Beranda',
               ),
               NavigationDestination(
-                icon: Icon(Icons.download_done_outlined),
-                label: 'Unduhan',
+                icon: Icon(Icons.search),
+                label: 'Cari',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.library_music_outlined),
+                selectedIcon: Icon(Icons.library_music),
+                label: 'Pustaka',
               ),
             ],
           ),
