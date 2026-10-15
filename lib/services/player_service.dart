@@ -5,6 +5,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
 import '../models/song.dart';
+import 'history_service.dart';
 import 'youtube_service.dart';
 
 class PlayerService {
@@ -115,6 +116,7 @@ class PlayerService {
 
     await player.setAudioSource(source);
     current.value = song;
+    HistoryService.instance.add(song).catchError((Object _) {});
     // Jangan di-await: Future dari play() baru selesai saat lagu berhenti.
     player.play();
   }
