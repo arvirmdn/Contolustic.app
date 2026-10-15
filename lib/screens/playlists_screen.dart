@@ -6,7 +6,9 @@ import '../widgets/add_to_playlist.dart';
 import 'playlist_detail_screen.dart';
 
 class PlaylistsScreen extends StatefulWidget {
-  const PlaylistsScreen({super.key});
+  /// true jika ditampilkan di dalam tab Pustaka (tanpa AppBar sendiri).
+  final bool embedded;
+  const PlaylistsScreen({super.key, this.embedded = false});
 
   @override
   State<PlaylistsScreen> createState() => _PlaylistsScreenState();
@@ -42,7 +44,7 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Playlist')),
+      appBar: widget.embedded ? null : AppBar(title: const Text('Playlist')),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
         label: const Text('Buat'),

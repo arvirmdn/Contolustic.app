@@ -6,7 +6,9 @@ import '../widgets/thumb.dart';
 import 'player_screen.dart';
 
 class DownloadsScreen extends StatefulWidget {
-  const DownloadsScreen({super.key});
+  /// true jika ditampilkan di dalam tab Pustaka (tanpa AppBar sendiri).
+  final bool embedded;
+  const DownloadsScreen({super.key, this.embedded = false});
 
   @override
   State<DownloadsScreen> createState() => _DownloadsScreenState();
@@ -36,7 +38,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Unduhan')),
+      appBar: widget.embedded ? null : AppBar(title: const Text('Unduhan')),
       body: _songs.isEmpty
           ? const Center(child: Text('Belum ada lagu yang diunduh'))
           : ListView.builder(

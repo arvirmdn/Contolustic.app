@@ -64,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Metrolist')),
+      appBar: AppBar(title: const Text('contolustic')),
       body: Column(
         children: [
           Padding(
