@@ -1,4 +1,6 @@
-# Metrolist (versi 0.1)
+# contolustic (versi 0.2)
+
+Pemutar musik YouTube dengan identitas visual sendiri: arang gelap, aksen jingga, navigasi pil melayang, dan daftar Top 10.
 
 Pemutar musik Flutter yang mengambil lagu dari YouTube, dengan fitur:
 
