@@ -108,14 +108,20 @@ class PlayerService {
     final candidates = await YoutubeService.instance.getAudioCandidates(videoId);
     Object? lastError;
     for (final info in candidates) {
-      try {
-        await player.setAudioSource(
-          AudioSource.uri(info.url, headers: _streamHeaders),
-        );
-        return;
-      } catch (e) {
-        debugPrint('Stream gagal, coba kandidat berikutnya: $e');
-        lastError = e;
+      // Coba tanpa header dulu (URL dari client YouTube biasanya cocok begini),
+      // lalu dengan header sebagai cadangan.
+      for (final headers in <Map<String, String>?>[null, _streamHeaders]) {
+        try {
+          await player.setAudioSource(
+            AudioSource.uri(info.url, headers: headers),
+          );
+          return;
+        } catch (e) {
+          debugPrint(
+            'Stream gagal (header=${headers != null}, bitrate=${info.bitrate}): $e',
+          );
+          lastError = e;
+        }
       }
     }
     throw lastError ?? Exception('Tidak ada stream audio yang bisa diputar');
