@@ -5,22 +5,34 @@ import 'package:flutter/material.dart';
 import '../models/song.dart';
 import '../services/history_service.dart';
 import '../services/youtube_service.dart';
+import '../theme.dart';
 import '../widgets/thumb.dart';
 import 'player_screen.dart';
 import 'song_list_screen.dart';
 
-/// Label chip dan kata kunci pencariannya.
-const _moods = [
-  ('Relax', 'lagu santai'),
-  ('Commute', 'lagu perjalanan'),
-  ('Sleep', 'musik tidur'),
-  ('Sad', 'lagu sedih'),
-  ('Energize', 'lagu semangat'),
+class _Mood {
+  final String label;
+  final String query;
+  final IconData icon;
+  final List<Color> colors;
+
+  const _Mood(this.label, this.query, this.icon, this.colors);
+}
+
+const _moods = <_Mood>[
+  _Mood('Santai', 'lagu santai', Icons.spa_outlined,
+      [Color(0xFF1F8A82), Color(0xFF0C3B39)]),
+  _Mood('Perjalanan', 'lagu perjalanan', Icons.directions_car_outlined,
+      [Color(0xFFE0603A), Color(0xFF4A1C10)]),
+  _Mood('Tidur', 'musik tidur', Icons.nights_stay_outlined,
+      [Color(0xFF4A4FB0), Color(0xFF161A3D)]),
+  _Mood('Sendu', 'lagu sedih', Icons.water_drop_outlined,
+      [Color(0xFF55688C), Color(0xFF1A2232)]),
+  _Mood('Semangat', 'lagu semangat', Icons.bolt_outlined,
+      [Color(0xFFD9A62B), Color(0xFF5C4A0E)]),
 ];
 
 const _popularQuery = 'lagu populer indonesia';
-const _gap = 8.0;
-const _perPage = 9;
 
 class BerandaScreen extends StatefulWidget {
   const BerandaScreen({super.key});
@@ -33,8 +45,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
   List<Song> _quick = [];
   bool _loadingQuick = true;
   List<Song> _history = [];
-  final _pageCtrl = PageController();
-  int _page = 0;
 
   @override
   void initState() {
@@ -47,7 +57,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
   @override
   void dispose() {
     HistoryService.changes.removeListener(_reloadHistory);
-    _pageCtrl.dispose();
     super.dispose();
   }
 
@@ -81,29 +90,61 @@ class _BerandaScreenState extends State<BerandaScreen> {
     playAndOpen(context, _quick[start], queue: _quick, shuffle: true);
   }
 
-  Widget _chips() {
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 11) return 'Pagi';
+    if (hour < 15) return 'Siang';
+    if (hour < 18) return 'Sore';
+    return 'Malam';
+  }
+
+  Widget _sectionTitle(String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 20,
+            decoration: BoxDecoration(
+              color: kEmber,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _moodRow() {
     return SizedBox(
-      height: 44,
+      height: 110,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: _moods.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, i) {
-          final (label, query) = _moods[i];
-          return ActionChip(
-            label: Text(label),
-            onPressed: () => _openList(
-              label,
-              () => YoutubeService.instance.search(query),
-            ),
+          final m = _moods[i];
+          return _MoodTile(
+            mood: m,
+            onTap: () => _openList(m.label, () => YoutubeService.instance.search(m.query)),
           );
         },
       ),
     );
   }
 
-  Widget _quickPicks() {
+  Widget _topTen() {
     if (_loadingQuick) {
       return const SizedBox(
         height: 200,
@@ -116,98 +157,62 @@ class _BerandaScreenState extends State<BerandaScreen> {
         child: Center(child: Text('Gagal memuat lagu. Coba lagi nanti.')),
       );
     }
-
-    final pages = (_quick.length / _perPage).ceil();
-    final scheme = Theme.of(context).colorScheme;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cell = (constraints.maxWidth - 2 * _gap) / 3;
-        final pageHeight = cell * 3 + 2 * _gap;
-
-        return Column(
-          children: [
-            SizedBox(
-              height: pageHeight,
-              child: PageView.builder(
-                controller: _pageCtrl,
-                itemCount: pages,
-                onPageChanged: (p) => setState(() => _page = p),
-                itemBuilder: (context, p) {
-                  final items = _quick.skip(p * _perPage).take(_perPage).toList();
-                  return GridView.count(
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 3,
-                    mainAxisSpacing: _gap,
-                    crossAxisSpacing: _gap,
-                    childAspectRatio: 1,
-                    children: [
-                      for (final s in items)
-                        _QuickTile(
-                          song: s,
-                          onTap: () => playAndOpen(context, s, queue: _quick),
-                        ),
-                    ],
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var i = 0; i < pages; i++)
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: i == _page ? scheme.primary : scheme.outlineVariant,
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        );
-      },
+    final top = _quick.take(10).toList();
+    return Column(
+      children: [
+        for (var i = 0; i < top.length; i++)
+          _RankRow(
+            rank: i + 1,
+            song: top[i],
+            onTap: () => playAndOpen(context, top[i], queue: _quick),
+          ),
+      ],
     );
   }
 
   Widget _historyRow() {
     if (_history.isEmpty) {
-      return const SizedBox(
+      return Container(
         height: 120,
-        child: Center(
-          child: Text('Lagu yang kamu putar akan muncul di sini'),
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: kSurface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Text(
+          'Lagu yang kamu putar akan muncul di sini',
+          style: TextStyle(color: Colors.white60),
         ),
       );
     }
     return SizedBox(
-      height: 200,
+      height: 190,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: _history.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, __) => const SizedBox(width: 14),
         itemBuilder: (context, i) {
           final song = _history[i];
           return SizedBox(
-            width: 140,
+            width: 130,
             child: InkWell(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(20),
               onTap: () => playAndOpen(context, song, queue: _history),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SongThumb(url: song.thumbnailUrl, size: 140, radius: 12),
+                  SongThumb(url: song.thumbnailUrl, size: 130, radius: 20),
                   const SizedBox(height: 8),
                   Text(
                     song.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -220,19 +225,23 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('contolustic'),
+        title: Row(
+          children: const [
+            Icon(Icons.graphic_eq, color: kEmber, size: 26),
+            SizedBox(width: 8),
+            Text('contolustic'),
+          ],
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.history),
+            icon: const Icon(Icons.history_rounded),
             tooltip: 'Riwayat',
             onPressed: () => _openList('Riwayat', HistoryService.instance.loadAll),
           ),
           IconButton(
-            icon: const Icon(Icons.trending_up),
+            icon: const Icon(Icons.local_fire_department_outlined),
             tooltip: 'Populer',
             onPressed: () => _openList(
               'Populer',
@@ -241,38 +250,34 @@ class _BerandaScreenState extends State<BerandaScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         tooltip: 'Acak',
+        backgroundColor: kEmber,
+        foregroundColor: Colors.black,
         onPressed: (_loadingQuick || _quick.isEmpty) ? null : _shuffleQuick,
-        child: const Icon(Icons.shuffle),
+        icon: const Icon(Icons.shuffle_rounded),
+        label: const Text('Acak', style: TextStyle(fontWeight: FontWeight.w800)),
       ),
       body: ListView(
-        padding: const EdgeInsets.only(bottom: 96),
+        padding: const EdgeInsets.only(bottom: 120),
         children: [
-          const SizedBox(height: 8),
-          _chips(),
-          const SizedBox(height: 20),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
             child: Text(
-              'Panggilan cepat',
-              style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+              'Selamat ${_greeting()}',
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.8,
+              ),
             ),
           ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _quickPicks(),
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Lanjut dengarkan',
-              style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(height: 8),
+          _moodRow(),
+          const SizedBox(height: 28),
+          _sectionTitle('Top 10 hari ini'),
+          _topTen(),
+          const SizedBox(height: 28),
+          _sectionTitle('Lanjut dengarkan'),
           _historyRow(),
         ],
       ),
@@ -280,56 +285,105 @@ class _BerandaScreenState extends State<BerandaScreen> {
   }
 }
 
-class _QuickTile extends StatelessWidget {
-  final Song song;
+class _MoodTile extends StatelessWidget {
+  final _Mood mood;
   final VoidCallback onTap;
 
-  const _QuickTile({required this.song, required this.onTap});
+  const _MoodTile({required this.mood, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final placeholder = ColoredBox(color: scheme.surfaceContainerHighest);
+    return SizedBox(
+      width: 150,
+      child: Material(
+        borderRadius: BorderRadius.circular(22),
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: mood.colors,
+            ),
+          ),
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Icon(mood.icon, color: Colors.white, size: 26),
+                  Text(
+                    mood.label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
+class _RankRow extends StatelessWidget {
+  final int rank;
+  final Song song;
+  final VoidCallback onTap;
+
+  const _RankRow({required this.rank, required this.song, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final top3 = rank <= 3;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Stack(
-          fit: StackFit.expand,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
           children: [
-            song.thumbnailUrl.isEmpty
-                ? placeholder
-                : Image.network(
-                    song.thumbnailUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => placeholder,
-                  ),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black87],
-                ),
-              ),
-            ),
-            Positioned(
-              left: 8,
-              right: 8,
-              bottom: 8,
+            SizedBox(
+              width: 34,
               child: Text(
-                song.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+                '$rank',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: top3 ? kEmber : Colors.white30,
                 ),
               ),
             ),
+            SongThumb(url: song.thumbnailUrl, size: 52, radius: 12),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    song.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    song.artist,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, color: Colors.white54),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.play_arrow_rounded, color: Colors.white54),
           ],
         ),
       ),

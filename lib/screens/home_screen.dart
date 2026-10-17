@@ -75,13 +75,10 @@ class _HomeScreenState extends State<HomeScreen> {
               onSubmitted: (_) => _search(),
               decoration: InputDecoration(
                 hintText: 'Cari lagu atau artis',
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search_rounded),
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.arrow_forward),
+                  icon: const Icon(Icons.arrow_forward_rounded),
                   onPressed: _search,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
             ),
@@ -97,14 +94,26 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           Expanded(
             child: _results.isEmpty && !_loading
-                ? const Center(child: Text('Ketik sesuatu untuk mencari'))
+                ? const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.travel_explore, size: 56, color: Colors.white24),
+                        SizedBox(height: 12),
+                        Text(
+                          'Ketik sesuatu untuk mencari',
+                          style: TextStyle(color: Colors.white54),
+                        ),
+                      ],
+                    ),
+                  )
                 : ListView.builder(
                     itemCount: _results.length,
                     itemBuilder: (context, i) {
                       final song = _results[i];
                       final busy = _downloading.contains(song.id);
                       return ListTile(
-                        leading: SongThumb(url: song.thumbnailUrl),
+                        leading: SongThumb(url: song.thumbnailUrl, radius: 14),
                         title: Text(
                           song.title,
                           maxLines: 2,

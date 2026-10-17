@@ -13,10 +13,10 @@ class PustakaScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Pustaka'),
+          title: const Text('Koleksi'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Playlist'),
+              Tab(text: 'Daftar Putar'),
               Tab(text: 'Unduhan'),
             ],
           ),

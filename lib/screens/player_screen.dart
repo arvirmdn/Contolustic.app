@@ -7,6 +7,7 @@ import '../services/lyrics_service.dart';
 import '../services/player_service.dart';
 import '../utils/format.dart';
 import '../widgets/add_to_playlist.dart';
+import '../theme.dart';
 import '../widgets/thumb.dart';
 
 const double _lineHeight = 56;
@@ -144,14 +145,35 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ),
         ],
       ),
-      body: SafeArea(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [kEmber.withOpacity(0.22), kInk],
+            stops: const [0.0, 0.6],
+          ),
+        ),
+        child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
               const SizedBox(height: 8),
-              SongThumb(url: song.thumbnailUrl, size: 200, radius: 16),
-              const SizedBox(height: 16),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: kEmber.withOpacity(0.35),
+                      blurRadius: 32,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: SongThumb(url: song.thumbnailUrl, size: 240, radius: 28),
+              ),
+              const SizedBox(height: 20),
               Text(
                 song.title,
                 maxLines: 2,
@@ -167,7 +189,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               const SizedBox(height: 8),
               _progress(),
               _controls(),
-              const Divider(),
+              const SizedBox(height: 12),
               Expanded(
                 child: FutureBuilder<Lyrics?>(
                   future: _lyrics,
@@ -181,6 +203,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -310,7 +333,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 style: TextStyle(
                   fontSize: active ? 20 : 16,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-                  color: active ? Colors.white : Colors.white54,
+                  color: active ? Theme.of(context).colorScheme.primary : Colors.white54,
                 ),
               ),
             );
